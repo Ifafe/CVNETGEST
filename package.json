@@ -1,0 +1,31 @@
+{
+  "name": "cvnetgest",
+  "version": "1.0.0",
+  "description": "CVNETGEST - Sistema de Gestão de Estoque Multi-nível (RBAC)",
+  "main": "server/src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "server": "node server/src/index.js",
+    "client": "cmd /c \"cd client && npm run dev\"",
+    "build": "cmd /c \"cd client && npm run build\"",
+    "seed": "node server/src/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.8.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^11.0.5"
+  },
+  "keywords": [
+    "inventory",
+    "management",
+    "rbac",
+    "cvnetgest",
+    "stock"
+  ],
+  "author": "CVNETGEST Team",
+  "license": "MIT"
+}

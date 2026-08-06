@@ -1,0 +1,19 @@
+{
+  "name": "cvnetgest-server",
+  "version": "1.0.0",
+  "description": "CVNETGEST Backend API",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "seed": "node src/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.8.1",
+    "uuid": "^11.0.5"
+  }
+}
