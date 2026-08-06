@@ -150,8 +150,8 @@ router.post('/', authenticateToken, (req, res) => {
   }
 });
 
-// PUT /api/products/:id (Update product details)
-router.put('/:id', authenticateToken, (req, res) => {
+// PUT /api/products/:id (Update product details - ADMIN only)
+router.put('/:id', authenticateToken, requireRole('ADMIN'), (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, category_id, supplier_id, cost_price, sale_price, min_stock, unit } = req.body;
@@ -161,8 +161,7 @@ router.put('/:id', authenticateToken, (req, res) => {
       return res.status(404).json({ error: 'Produto não encontrado.' });
     }
 
-    const isAdmin = req.user.role === 'ADMIN';
-    const newCostPrice = isAdmin && cost_price !== undefined ? Number(cost_price) : product.cost_price;
+    const newCostPrice = cost_price !== undefined ? Number(cost_price) : product.cost_price;
     const newSalePrice = sale_price !== undefined ? Number(sale_price) : product.sale_price;
 
     db.prepare(`
@@ -195,6 +194,35 @@ router.put('/:id', authenticateToken, (req, res) => {
   } catch (error) {
     console.error('Erro ao atualizar produto:', error);
     res.status(500).json({ error: 'Erro ao atualizar produto.' });
+  }
+});
+
+// DELETE /api/products/:id (Delete product - ADMIN only)
+router.delete('/:id', authenticateToken, requireRole('ADMIN'), (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+    if (!product) {
+      return res.status(404).json({ error: 'Produto não encontrado.' });
+    }
+
+    db.prepare('DELETE FROM products WHERE id = ?').run(id);
+
+    logAudit(
+      req.user.id,
+      req.user.name,
+      req.user.role,
+      'PRODUCT_DELETE',
+      'PRODUCT',
+      id,
+      { product_name: product.name, sku: product.sku }
+    );
+
+    res.json({ message: 'Produto eliminado com sucesso.' });
+  } catch (error) {
+    console.error('Erro ao eliminar produto:', error);
+    res.status(500).json({ error: 'Erro ao eliminar produto do estoque.' });
   }
 });
 
