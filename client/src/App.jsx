@@ -66,6 +66,7 @@ function RequireRole({ role, children }) {
 function MainLayout() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!user) {
     return <Login />;
@@ -73,9 +74,14 @@ function MainLayout() {
 
   return (
     <div className="app-container">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+      <Sidebar
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       <div className="main-content">
-        <Navbar />
+        <Navbar onMenuToggle={() => setSidebarOpen(prev => !prev)} />
         {currentPage === 'dashboard' && <Dashboard setCurrentPage={setCurrentPage} />}
         {currentPage === 'products' && <Products />}
         {currentPage === 'movements' && <Movements />}
