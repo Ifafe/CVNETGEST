@@ -499,3 +499,126 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+/* ==========================================================================
+   PRINT & PDF HIGH-QUALITY DOCUMENT STYLESHEET (@media print)
+   ========================================================================== */
+@media print {
+  /* Page Setup & Margins */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  /* Reset Backgrounds & Colors for Printing */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 10pt;
+  }
+
+  /* Hide Non-Printable Elements */
+  .sidebar,
+  .navbar,
+  .modal-overlay,
+  .modal-header button,
+  .modal-content > form,
+  .page-header div:last-child,
+  button,
+  .btn,
+  .role-simulator,
+  .glass-panel input,
+  .glass-panel select {
+    display: none !important;
+  }
+
+  /* Display Modal Content Cleanly When Modal is Open */
+  body:has(.modal-overlay) .modal-overlay {
+    display: block !important;
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+  }
+
+  body:has(.modal-overlay) .modal-content {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    animation: none !important;
+  }
+
+  /* Sticker Sheets Grid Format */
+  .printable-labels-sheet-wrapper,
+  .printable-single-barcode-wrapper {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .printable-labels-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8mm !important;
+    background: #ffffff !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .label-sticker-item {
+    border: 1.5pt solid #000000 !important;
+    border-radius: 4px !important;
+    padding: 3mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background: #ffffff !important;
+  }
+
+  .barcode-sticker-card {
+    border: 2pt solid #000000 !important;
+    padding: 5mm !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure SVG Barcodes render crisp black vector bars */
+  svg {
+    max-width: 100% !important;
+  }
+
+  svg rect {
+    fill: #000000 !important;
+  }
+
+  svg text {
+    fill: #000000 !important;
+  }
+
+  /* Clean Tables for Reports Printouts */
+  .custom-table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin-top: 15px !important;
+  }
+
+  .custom-table th {
+    background: #f1f5f9 !important;
+    color: #000000 !important;
+    border: 1pt solid #cbd5e1 !important;
+    padding: 6px 10px !important;
+    font-weight: bold !important;
+  }
+
+  .custom-table td {
+    border: 1pt solid #cbd5e1 !important;
+    padding: 6px 10px !important;
+    color: #000000 !important;
+  }
+}
+
