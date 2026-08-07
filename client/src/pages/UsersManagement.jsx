@@ -7,8 +7,10 @@ import {
   User,
   CheckCircle,
   AlertCircle,
-  ToggleLeft,
-  ToggleRight
+  Edit2,
+  KeyRound,
+  Lock,
+  X
 } from 'lucide-react';
 
 export default function UsersManagement() {
@@ -17,13 +19,22 @@ export default function UsersManagement() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState(null);
 
-  // Modal State
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
+  // Modal Create State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createFormData, setCreateFormData] = useState({
     name: '',
     email: '',
     password: '',
     role: 'EMPLOYEE'
+  });
+
+  // Modal Edit Credentials State (ADMIN only)
+  const [editingUser, setEditingUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    password: '',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE'
   });
 
   const isAdmin = user?.role === 'ADMIN';
@@ -52,11 +63,37 @@ export default function UsersManagement() {
     try {
       const res = await apiFetch('/api/users', {
         method: 'POST',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(createFormData)
       });
       setMsg({ type: 'success', text: res.message });
-      setShowModal(false);
-      setFormData({ name: '', email: '', password: '', role: 'EMPLOYEE' });
+      setShowCreateModal(false);
+      setCreateFormData({ name: '', email: '', password: '', role: 'EMPLOYEE' });
+      loadUsers();
+    } catch (err) {
+      setMsg({ type: 'error', text: err.message });
+    }
+  };
+
+  const handleOpenEditModal = (targetUser) => {
+    setEditingUser(targetUser);
+    setEditFormData({
+      name: targetUser.name,
+      password: '',
+      role: targetUser.role,
+      status: targetUser.status
+    });
+  };
+
+  const handleUpdateUserCredentials = async (e) => {
+    e.preventDefault();
+    setMsg(null);
+    try {
+      const res = await apiFetch(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(editFormData)
+      });
+      setMsg({ type: 'success', text: res.message });
+      setEditingUser(null);
       loadUsers();
     } catch (err) {
       setMsg({ type: 'error', text: err.message });
@@ -84,7 +121,7 @@ export default function UsersManagement() {
         <Shield size={48} color="var(--accent-rose)" style={{ marginBottom: '1rem' }} />
         <h2>Acesso Restrito ao Administrador/Dono</h2>
         <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-          A gestão de utilizadores e cargos é restrita ao Administrador Principal.
+          A gestão de utilizadores, alteração de nomes e palavras-passe é uma funcionalidade restrita exclusivamente ao Administrador Principal.
         </p>
       </div>
     );
@@ -95,10 +132,10 @@ export default function UsersManagement() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Gestão de Utilizadores</h1>
-          <p className="page-subtitle">Adicionar funcionários, gerir cargos e permissões hierárquicas (RBAC)</p>
+          <p className="page-subtitle">Apenas o Administrador pode registar utilizadores, alterar nomes e definir palavras-passe</p>
         </div>
 
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">
+        <button onClick={() => setShowCreateModal(true)} className="btn btn-primary">
           <UserPlus size={18} /> Adicionar Novo Utilizador
         </button>
       </div>
@@ -132,7 +169,7 @@ export default function UsersManagement() {
                 <th>Cargo / Função</th>
                 <th>Estado da Conta</th>
                 <th>Data de Registo</th>
-                <th style={{ textAlign: 'right' }}>Ações</th>
+                <th style={{ textAlign: 'right' }}>Ações de Administrador</th>
               </tr>
             </thead>
             <tbody>
@@ -170,14 +207,25 @@ export default function UsersManagement() {
                     {new Date(u.created_at).toLocaleDateString('pt-PT')}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    {u.id !== user.id && (
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <button
-                        onClick={() => handleToggleStatus(u)}
-                        className={`btn ${u.status === 'ACTIVE' ? 'btn-danger' : 'btn-success'} btn-sm`}
+                        onClick={() => handleOpenEditModal(u)}
+                        className="btn btn-secondary btn-sm"
+                        title="Editar Nome e Palavra-passe (Exclusivo Admin)"
                       >
-                        {u.status === 'ACTIVE' ? 'Desativar Conta' : 'Ativar Conta'}
+                        <KeyRound size={14} />
+                        <span>Editar Credenciais</span>
                       </button>
-                    )}
+
+                      {u.id !== user.id && (
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          className={`btn ${u.status === 'ACTIVE' ? 'btn-danger' : 'btn-success'} btn-sm`}
+                        >
+                          {u.status === 'ACTIVE' ? 'Desativar' : 'Ativar'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -186,13 +234,98 @@ export default function UsersManagement() {
         </div>
       </div>
 
-      {/* Create User Modal */}
-      {showModal && (
+      {/* Edit User Credentials Modal (ADMIN ONLY) */}
+      {editingUser && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <KeyRound size={20} color="var(--primary)" /> Alterar Nome e Palavra-passe
+              </h3>
+              <button onClick={() => setEditingUser(null)} className="btn btn-secondary btn-sm"><X size={16} /></button>
+            </div>
+
+            <form onSubmit={handleUpdateUserCredentials}>
+              <div style={{
+                background: 'rgba(255,255,255,0.03)',
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--radius-sm)',
+                marginBottom: '1.25rem',
+                border: '1px solid var(--border-color)',
+                fontSize: '0.85rem'
+              }}>
+                <span style={{ color: 'var(--text-muted)' }}>E-mail da Conta:</span> <strong>{editingUser.email}</strong>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Nome do Utilizador</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Nova Palavra-passe (deixe em branco para não alterar)</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="Nova palavra-passe (opcional)"
+                  value={editFormData.password}
+                  onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Cargo / Perfil</label>
+                  <select
+                    className="form-select"
+                    value={editFormData.role}
+                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                  >
+                    <option value="EMPLOYEE">Funcionário / Operador</option>
+                    <option value="ADMIN">Dono / Administrador</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Estado da Conta</label>
+                  <select
+                    className="form-select"
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                    disabled={editingUser.id === user.id}
+                  >
+                    <option value="ACTIVE">Ativa</option>
+                    <option value="INACTIVE">Inativa</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                <button type="button" onClick={() => setEditingUser(null)} className="btn btn-secondary">
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Guardar Credenciais
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create User Modal (ADMIN ONLY) */}
+      {showCreateModal && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
               <h3>Adicionar Novo Utilizador / Funcionário</h3>
-              <button onClick={() => setShowModal(false)} className="btn btn-secondary btn-sm">✕</button>
+              <button onClick={() => setShowCreateModal(false)} className="btn btn-secondary btn-sm"><X size={16} /></button>
             </div>
 
             <form onSubmit={handleCreateUser}>
@@ -202,8 +335,8 @@ export default function UsersManagement() {
                   type="text"
                   className="form-input"
                   placeholder="ex: Pedro Santos"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={createFormData.name}
+                  onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
                   required
                 />
               </div>
@@ -214,8 +347,8 @@ export default function UsersManagement() {
                   type="email"
                   className="form-input"
                   placeholder="ex: pedro@cvnetgest.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  value={createFormData.email}
+                  onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
                   required
                 />
               </div>
@@ -226,8 +359,8 @@ export default function UsersManagement() {
                   type="password"
                   className="form-input"
                   placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  value={createFormData.password}
+                  onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
                   required
                 />
               </div>
@@ -236,8 +369,8 @@ export default function UsersManagement() {
                 <label className="form-label">Cargo & Permissões Hierárquicas</label>
                 <select
                   className="form-select"
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  value={createFormData.role}
+                  onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value })}
                 >
                   <option value="EMPLOYEE">Funcionário / Operador (Sem acesso financeiro)</option>
                   <option value="ADMIN">Dono / Administrador Principal (Acesso total)</option>
@@ -245,7 +378,7 @@ export default function UsersManagement() {
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="btn btn-secondary">
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">

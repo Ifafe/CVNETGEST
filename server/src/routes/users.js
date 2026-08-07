@@ -69,13 +69,13 @@ router.post('/', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   }
 });
 
-// PUT /api/users/:id/role (ADMIN only - Change Role or Status)
-router.put('/:id', authenticateToken, requireRole('ADMIN'), (req, res) => {
+// PUT /api/users/:id (ADMIN only - Update Name, Password, Role or Status)
+router.put('/:id', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { role, status } = req.body;
+    const { name, password, role, status } = req.body;
 
-    const user = db.prepare('SELECT id, name, role, status FROM users WHERE id = ?').get(id);
+    const user = db.prepare('SELECT id, name, email, role, status FROM users WHERE id = ?').get(id);
     if (!user) {
       return res.status(404).json({ error: 'Utilizador não encontrado.' });
     }
@@ -84,25 +84,33 @@ router.put('/:id', authenticateToken, requireRole('ADMIN'), (req, res) => {
       return res.status(400).json({ error: 'Não pode desativar a sua própria conta de Administrador.' });
     }
 
+    const newName = name ? name.trim() : user.name;
     const newRole = role || user.role;
     const newStatus = status || user.status;
 
-    db.prepare('UPDATE users SET role = ?, status = ? WHERE id = ?').run(newRole, newStatus, id);
+    if (password && password.trim().length > 0) {
+      const passwordHash = await bcrypt.hash(password.trim(), 10);
+      db.prepare('UPDATE users SET name = ?, password_hash = ?, role = ?, status = ? WHERE id = ?')
+        .run(newName, passwordHash, newRole, newStatus, id);
+    } else {
+      db.prepare('UPDATE users SET name = ?, role = ?, status = ? WHERE id = ?')
+        .run(newName, newRole, newStatus, id);
+    }
 
     logAudit(
       req.user.id,
       req.user.name,
       req.user.role,
-      'USER_UPDATE',
+      'USER_UPDATE_CREDENTIALS',
       'USER',
       id,
-      { target_user: user.name, old_role: user.role, new_role: newRole, old_status: user.status, new_status: newStatus }
+      { target_user: user.name, new_name: newName, password_changed: Boolean(password), new_role: newRole, new_status: newStatus }
     );
 
-    res.json({ message: 'Utilizador atualizado com sucesso' });
+    res.json({ message: 'Dados e credenciais do utilizador atualizados com sucesso.' });
   } catch (error) {
     console.error('Erro ao atualizar utilizador:', error);
-    res.status(500).json({ error: 'Erro ao atualizar utilizador.' });
+    res.status(500).json({ error: 'Erro ao atualizar dados do utilizador.' });
   }
 });
 
