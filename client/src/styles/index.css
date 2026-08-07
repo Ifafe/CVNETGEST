@@ -649,6 +649,20 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
 }
 
+/* Sidebar close (X) button — styled consistently */
+.sidebar-close-btn {
+  background: rgba(244, 63, 94, 0.12) !important;
+  border: 1px solid rgba(244, 63, 94, 0.3) !important;
+  color: #fb7185 !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Tablet: 768px – 1024px */
 @media (max-width: 1024px) {
   .stats-grid {
@@ -660,15 +674,23 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 768px) {
   /* --- Hamburger & Sidebar Drawer --- */
   .hamburger-btn {
-    display: inline-flex;
+    display: inline-flex !important;
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+    color: #818cf8 !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.5rem !important;
+    min-width: 40px;
+    min-height: 40px;
   }
 
   .sidebar-backdrop {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 99;
     animation: fadeIn 0.2s ease;
   }
@@ -706,12 +728,12 @@ h1, h2, h3, h4, h5, h6 {
 
   /* --- Navbar --- */
   .navbar {
-    padding: 0 1rem;
-    height: 60px;
+    padding: 0 0.85rem;
+    height: 64px;
   }
 
   .brand-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   /* Hide user info text on mobile (keep avatar) */
