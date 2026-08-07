@@ -12,7 +12,13 @@ import {
   ShieldAlert,
   ArrowRight,
   PieChart as PieIcon,
-  BarChart3
+  BarChart3,
+  PlusCircle,
+  FileSpreadsheet,
+  Printer,
+  Clock,
+  Zap,
+  Layers
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -39,7 +45,7 @@ export default function Dashboard({ setCurrentPage }) {
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = user.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     loadDashboardData();
@@ -52,7 +58,7 @@ export default function Dashboard({ setCurrentPage }) {
       const loadedProducts = pData.products || [];
       setProducts(loadedProducts);
 
-      const mData = await apiFetch('/api/movements?limit=10');
+      const mData = await apiFetch('/api/movements?limit=15');
       setMovements(mData.movements || []);
 
       if (isAdmin) {
@@ -60,7 +66,6 @@ export default function Dashboard({ setCurrentPage }) {
         setValuation(vData.summary || null);
         setCategoryData(vData.category_valuation || []);
       } else {
-        // Build category summary for non-admin
         const catMap = {};
         loadedProducts.forEach(p => {
           const cName = p.category_name || 'Geral';
@@ -86,6 +91,9 @@ export default function Dashboard({ setCurrentPage }) {
 
   const lowStockProducts = products.filter(p => p.quantity <= p.min_stock);
 
+  // Clean user display name
+  const cleanUserName = (user?.name || 'Utilizador').replace(/\s*\([^)]*\)/g, '');
+
   // Prepare chart data
   const pieChartData = categoryData.map(c => ({
     name: c.category_name || 'Geral',
@@ -101,19 +109,49 @@ export default function Dashboard({ setCurrentPage }) {
 
   return (
     <div className="page-container">
+      {/* Page Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Painel de Controlo</h1>
           <p className="page-subtitle">
-            Bem-vindo de volta, <strong>{user.name}</strong> ({isAdmin ? 'Dono / Administrador' : 'Funcionário / Operador'})
+            Bem-vindo de volta, <strong>{cleanUserName}</strong> • {isAdmin ? 'Dono / Administrador' : 'Funcionário / Operador'}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button onClick={() => setCurrentPage('movements')} className="btn btn-primary">
-            + Registar Movimentação
+            <PlusCircle size={16} /> Registar Movimentação
           </button>
         </div>
+      </div>
+
+      {/* Quick Action Bar / Shortcuts */}
+      <div className="glass-panel" style={{
+        padding: '0.85rem 1.25rem',
+        marginBottom: '1.75rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        flexWrap: 'wrap',
+        background: 'rgba(255, 255, 255, 0.02)'
+      }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <Zap size={14} color="var(--accent-amber)" /> Atalhos Rápidos:
+        </span>
+        <button onClick={() => setCurrentPage('products')} className="btn btn-secondary btn-sm" style={{ fontSize: '0.8rem' }}>
+          <Package size={14} /> Catálogo de Produtos
+        </button>
+        <button onClick={() => setCurrentPage('movements')} className="btn btn-secondary btn-sm" style={{ fontSize: '0.8rem' }}>
+          <ArrowDownLeft size={14} color="var(--accent-emerald)" /> Entrada / Compra
+        </button>
+        <button onClick={() => setCurrentPage('movements')} className="btn btn-secondary btn-sm" style={{ fontSize: '0.8rem' }}>
+          <ArrowUpRight size={14} color="var(--accent-rose)" /> Saída / Venda
+        </button>
+        {isAdmin && (
+          <button onClick={() => setCurrentPage('financial')} className="btn btn-secondary btn-sm" style={{ fontSize: '0.8rem' }}>
+            <TrendingUp size={14} color="var(--accent-purple)" /> Relatório Financeiro
+          </button>
+        )}
       </div>
 
       {!isAdmin && (
@@ -126,7 +164,7 @@ export default function Dashboard({ setCurrentPage }) {
       )}
 
       {/* Dynamic Stat Cards */}
-      <div className="stats-grid">
+      <div className="stats-grid" style={{ marginBottom: '1.75rem' }}>
         <StatCard
           title="Produtos Registados"
           value={products.length}
@@ -138,7 +176,7 @@ export default function Dashboard({ setCurrentPage }) {
         <StatCard
           title="Alertas de Estoque Baixo"
           value={lowStockProducts.length}
-          subtitle="Produtos abaixo do limite mínimo"
+          subtitle={lowStockProducts.length > 0 ? "Requer reposição urgente" : "Estoque em nível saudável"}
           icon={AlertTriangle}
           color={lowStockProducts.length > 0 ? 'rose' : 'emerald'}
         />
@@ -184,34 +222,39 @@ export default function Dashboard({ setCurrentPage }) {
       {/* Pending Approval Alert Box for Admin */}
       {isAdmin && pendingApprovals.length > 0 && (
         <div className="glass-panel" style={{
-          padding: '1.25rem',
-          marginBottom: '2rem',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.75rem',
           borderLeft: '4px solid var(--accent-amber)',
+          background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.08), transparent)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div style={{ background: 'rgba(245, 158, 11, 0.2)', padding: '0.6rem', borderRadius: '50%', color: '#fbbf24' }}>
+            <div style={{ background: 'rgba(245, 158, 11, 0.2)', padding: '0.65rem', borderRadius: '50%', color: '#fbbf24' }}>
               <ShieldAlert size={22} />
             </div>
             <div>
-              <h4 style={{ fontSize: '1rem', color: '#fbbf24' }}>
-                Existem {pendingApprovals.length} solicitação(ões) de ajuste de estoque pendente(s) de aprovação!
+              <h4 style={{ fontSize: '1rem', color: '#fbbf24', margin: 0 }}>
+                {pendingApprovals.length === 1
+                  ? 'Existe 1 solicitação de ajuste de estoque pendente de aprovação!'
+                  : `Existem ${pendingApprovals.length} solicitações de ajuste de estoque pendentes de aprovação!`}
               </h4>
-              <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '2px', margin: 0 }}>
                 Funcionários submeteram correções de estoque devido a perdas ou avarias que exigem a sua validação.
               </p>
             </div>
           </div>
-          <button onClick={() => setCurrentPage('approvals')} className="btn btn-warning btn-sm" style={{ background: 'var(--accent-amber)', color: '#000' }}>
-            Rever Ajustes <ArrowRight size={14} />
+          <button onClick={() => setCurrentPage('approvals')} className="btn btn-warning" style={{ background: 'var(--accent-amber)', color: '#000', fontWeight: '700' }}>
+            Rever Ajustes <ArrowRight size={16} />
           </button>
         </div>
       )}
 
       {/* Interactive Charts Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         {/* Pie/Donut Chart */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -237,8 +280,8 @@ export default function Dashboard({ setCurrentPage }) {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(val) => [isAdmin ? `Kz ${Number(val).toLocaleString('pt-AO', { minimumFractionDigits: 2 })}` : `${val} un`, 'Total']}
-                    contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
+                    formatter={(val) => [isAdmin ? `Kz ${Number(val).toLocaleString('pt-AO', { minimumFractionDigits: 2 })}` : `${val} un`, 'Valoração']}
+                    contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '0.85rem' }}
                   />
                   <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '0.8rem', color: '#94a3b8' }} />
                 </PieChart>
@@ -261,7 +304,7 @@ export default function Dashboard({ setCurrentPage }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="type" stroke="#94a3b8" />
                 <YAxis stroke="#94a3b8" />
-                <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }} />
+                <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff', fontSize: '0.85rem' }} />
                 <Bar dataKey="quantidade" radius={[6, 6, 0, 0]}>
                   {movementStats.map((entry, index) => (
                     <Cell key={`bar-${index}`} fill={entry.fill} />
@@ -274,7 +317,7 @@ export default function Dashboard({ setCurrentPage }) {
       </div>
 
       {/* Grid: Low Stock Alert & Recent Movements */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem' }}>
         {/* Low Stock Table */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -282,12 +325,12 @@ export default function Dashboard({ setCurrentPage }) {
               <AlertTriangle size={18} color="var(--accent-rose)" /> Produtos com Estoque Baixo
             </h3>
             <button onClick={() => setCurrentPage('products')} className="btn btn-secondary btn-sm">
-              Ver Todos
+              Ver Todos no Catálogo
             </button>
           </div>
 
           {lowStockProducts.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem 0' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1.5rem 0', textAlign: 'center' }}>
               🎉 Todos os produtos estão com níveis de estoque adequados.
             </p>
           ) : (
@@ -297,21 +340,31 @@ export default function Dashboard({ setCurrentPage }) {
                   <tr>
                     <th>Produto</th>
                     <th>Qtd Atual</th>
-                    <th>Qtd Mín.</th>
-                    <th>Estado</th>
+                    <th>Mínimo</th>
+                    <th style={{ textAlign: 'right' }}>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
                   {lowStockProducts.slice(0, 5).map(p => (
                     <tr key={p.id}>
                       <td>
-                        <div style={{ fontWeight: '600' }}>{p.name}</div>
+                        <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{p.name}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {p.sku}</div>
                       </td>
-                      <td style={{ fontWeight: '700' }}>{p.quantity} {p.unit}</td>
-                      <td>{p.min_stock} {p.unit}</td>
-                      <td>
-                        <LowStockBadge quantity={p.quantity} minStock={p.min_stock} />
+                      <td style={{ fontWeight: '700', color: 'var(--accent-rose)' }}>
+                        {p.quantity} {p.unit}
+                      </td>
+                      <td style={{ color: 'var(--text-muted)' }}>
+                        {p.min_stock} {p.unit}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          onClick={() => setCurrentPage('movements')}
+                          className="btn btn-primary btn-sm"
+                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                        >
+                          + Repor
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -321,50 +374,54 @@ export default function Dashboard({ setCurrentPage }) {
           )}
         </div>
 
-        {/* Recent Movements Log */}
+        {/* Recent Movements History */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ArrowDownLeft size={18} color="var(--primary)" /> Últimas Movimentações
+              <Clock size={18} color="var(--accent-cyan)" /> Últimas Movimentações
             </h3>
             <button onClick={() => setCurrentPage('movements')} className="btn btn-secondary btn-sm">
-              Histórico
+              Ver Histórico Completo
             </button>
           </div>
 
-          <div className="table-container">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Tipo</th>
-                  <th>Produto</th>
-                  <th>Quantidade</th>
-                  <th>Utilizador</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movements.slice(0, 5).map(m => (
-                  <tr key={m.id}>
-                    <td>
-                      {m.type === 'ENTRY' && <span className="badge badge-success"><ArrowDownLeft size={12} /> Entrada</span>}
-                      {m.type === 'EXIT' && <span className="badge badge-danger"><ArrowUpRight size={12} /> Saída</span>}
-                      {m.type === 'ADJUSTMENT' && <span className="badge badge-warning">Ajuste</span>}
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: '500' }}>{m.product_name}</div>
-                      <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>{new Date(m.created_at).toLocaleString('pt-PT')}</div>
-                    </td>
-                    <td style={{ fontWeight: '700' }}>
-                      {m.type === 'ENTRY' ? `+${m.quantity}` : `-${m.quantity}`}
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      {m.user_name}
-                    </td>
+          {movements.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1.5rem 0', textAlign: 'center' }}>
+              Nenhuma movimentação recente registada.
+            </p>
+          ) : (
+            <div className="table-container">
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>Produto & Tipo</th>
+                    <th>Quantidade</th>
+                    <th>Utilizador</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {movements.slice(0, 5).map(m => (
+                    <tr key={m.id}>
+                      <td>
+                        <div style={{ fontWeight: '600', fontSize: '0.875rem' }}>{m.product_name}</div>
+                        <span className={`badge ${
+                          m.type === 'ENTRY' ? 'badge-success' : m.type === 'EXIT' ? 'badge-danger' : 'badge-warning'
+                        }`} style={{ fontSize: '0.65rem', marginTop: '2px' }}>
+                          {m.type === 'ENTRY' ? 'Entrada' : m.type === 'EXIT' ? 'Saída' : 'Ajuste'}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: '700' }}>
+                        {m.quantity}
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {m.user_name || 'Sistema'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
