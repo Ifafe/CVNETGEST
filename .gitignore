@@ -6,3 +6,4 @@ client/dist/
 *.db
 *.sqlite
 .DS_Store
+.vercel
